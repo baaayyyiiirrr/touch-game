@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Touch Game</title>
+
+<style>
+    body {
+        background: #eef2f7;
+        display: flex;
+        justify-content: center;
+        padding-top: 25px;
+        font-family: sans-serif;
+        direction: rtl;
+    }
+
+    .container {
+        position: relative;
+        width: 330px;
+    }
+
+    img.character {
+        width: 100%;
+        border-radius: 10px;
+    }
+
+    /* ✔ نقاط اللمس — شفافة بدون لون */
+    .point {
+        position: absolute;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        cursor: pointer;
+        background: transparent !important; /* ← بدون لون */
+        box-shadow: none !important;       /* ← بدون ظل */
+        border: none !important;           /* ← بدون حدود */
+    }
+
+    /* ✔ نقاط المساعدة — إطار أبيض شفاف */
+    .hint {
+        position: absolute;
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        border: 2px solid rgba(255,255,255,0.7);
+        background: transparent;
+        pointer-events: none;
+    }
+
+    .feedback {
+        position: absolute;
+        font-size: 28px;
+        font-weight: bold;
+        transform: translate(-50%, -50%);
+        user-select: none;
+    }
+
+    .buttons {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        margin-bottom: 12px;
+    }
+
+    button {
+        padding: 8px 14px;
+        background: white;
+        border: 1px solid #bbb;
+        border-radius: 7px;
+        cursor: pointer;
+        font-size: 15px;
+    }
+</style>
+</head>
+
+<body>
+
+<div>
+
+    <div class="buttons">
+        <button onclick="loadCharacter('girl.jpeg')">بنت</button>
+        <button onclick="loadCharacter('boy.jpeg')">ولد</button>
+        <button onclick="toggleHints()">إظهار / إخفاء المساعدة</button>
+    </div>
+
+    <div class="container">
+        <img id="characterImage" src="girl.jpeg" class="character">
+        <div id="touchContainer"></div>
+    </div>
+
+</div>
+
+<script>
+let showHints = true;
+
+/* ============================
+      الأصوات
+============================ */
+const soundCorrect = new Audio("correct.m4a");
+const soundWrong   = new Audio("wrong.m4a");
+
+
+/* ============================================================
+      الإحداثيات + نقطة الصدر الخاطئة
+============================================================ */
+const touchPoints = {
+
+    "girl.jpeg": [
+        { id:"left_hint",    x:29, y:66, correct:true },
+        { id:"middle_wrong", x:50, y:64, correct:false },
+
+        { id:"chest_wrong",  x:50, y:50, correct:false },
+
+        { id:"right_hint",   x:71, y:66, correct:true }
+    ],
+
+    "boy.jpeg": [
+        { id:"chest_wrong",  x:50, y:50, correct:false },
+        { id:"thigh",        x:50, y:67, correct:false },
+        { id:"hand_r",       x:71, y:66, correct:true },
+        { id:"hand_l",       x:29, y:66, correct:true }
+    ]
+};
+
+
+const img = document.getElementById("characterImage");
+const touchContainer = document.getElementById("touchContainer");
+
+
+function loadCharacter(name){
+    img.src = name;
+    setTimeout(loadPoints, 80);
+}
+
+
+function loadPoints(){
+    touchContainer.innerHTML = "";
+    const name = img.src.split("/").pop();
+    const points = touchPoints[name];
+
+    points.forEach(p => {
+
+        /* ✔ نقطة اللمس (شفافة) */
+        const dot = document.createElement("div");
+        dot.className = "point";
+        dot.style.left = p.x + "%";
+        dot.style.top  = p.y + "%";
+        dot.addEventListener("click", ()=> showFeedback(dot, p.correct));
+        touchContainer.appendChild(dot);
+
+        /* ✔ دائرة المساعدة */
+        const hint = document.createElement("div");
+        hint.className = "hint";
+        hint.style.left = p.x + "%";
+        hint.style.top  = p.y + "%";
+        hint.style.display = showHints ? "block" : "none";
+        touchContainer.appendChild(hint);
+    });
+}
+
+
+/* ============================
+   ✔ إظهار علامة الصح أو الخطأ + الصوت
+============================ */
+function showFeedback(dot, isCorrect){
+    const fb = document.createElement("div");
+    fb.className = "feedback";
+    fb.textContent = isCorrect ? "✔" : "✖";
+    fb.style.color = isCorrect ? "green" : "red";
+
+    fb.style.left = "50%";
+    fb.style.top  = "50%";
+
+    dot.appendChild(fb);
+
+    /* 🔊 تشغيل الصوت المناسب */
+    if(isCorrect){
+        soundCorrect.currentTime = 0;
+        soundCorrect.play();
+    } else {
+        soundWrong.currentTime = 0;
+        soundWrong.play();
+    }
+
+    setTimeout(()=> fb.remove(), 900);
+}
+
+
+/* ============================
+      إظهار / إخفاء المساعدة
+============================ */
+function toggleHints(){
+    showHints = !showHints;
+    document.querySelectorAll(".hint").forEach(h => {
+        h.style.display = showHints ? "block" : "none";
+    });
+}
+
+loadPoints();
+</script>
+
+</body>
+</html>
